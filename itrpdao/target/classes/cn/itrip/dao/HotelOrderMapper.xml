@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itrip.dao.HotelOrderMapper">
+    <insert id="addhotelorder">
+        insert into itrip_hotel_order(id,orderNo,checkInDate,checkOutDate,payAmount,count,bookingDays,hotelId,hotelName,invoiceHead,
+        invoiceType,isNeedInvoice,linkUserName,noticeEmail,noticePhone,orderType,roomId,specialRequirement,userId,createdBy,creationDate,modifyDate,modifiedBy,payType)
+        values (null,#{orderNo},#{checkInDate},#{checkOutDate},#{payAmount},#{count},#{bookingDays},#{hotelId},#{hotelName},#{invoiceHead},#{invoiceType},
+        #{isNeedInvoice},#{linkUserName},#{noticeEmail},#{noticePhone},#{orderType},#{roomId},#{specialRequirement},#{token},#{token},NOW(),NOW(),#{token},#{payType})
+    </insert>
+    <update id="updateTheOrderStatus">
+        update itrip_hotel_order set orderStatus=#{param1} where id=#{param2}
+    </update>
+    <update id="updateTheOrderStatusByOrderNo">
+         update itrip_hotel_order set orderStatus=#{param1} where orderNo=#{param2}
+    </update>
+
+    <select id="getpreorderinfo" resultType="cn.itrip.dao.pojo.PreoederInfo">
+     select ih.hotelName,ihr.roomprice price from itrip_hotel ih,itrip_hotel_room ihr where ih.id=ihr.hotelId and  ihr.id=#{roomId}
+    </select>
+
+    <select id="selectOrderNo" resultType="cn.itrip.pojo.ItripHotelOrder" parameterType="java.lang.String">
+        select * from itrip_hotel_order where orderNo=#{orderNo}
+    </select>
+
+    <select id="selectRoom" resultType="cn.itrip.pojo.ItripHotelRoom">
+        select id,roomPrice from itrip_hotel_room where id=#{roomId}
+    </select>
+
+    <select id="queryOrderById" resultType="cn.itrip.dao.pojo.AddHotelOrderParam">
+       select * from itrip_hotel_order where id=#{orderId}
+    </select>
+
+    <select id="ScanTheOrder" resultType="cn.itrip.pojo.ItripHotelOrder">
+        select * from itrip_hotel_order;
+    </select>
+</mapper>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context = "http://www.springframework.org/schema/context"
+        xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="cn.itrip.service"/>
+
+
+    <bean class="cn.itrip.utils.RedisAPI"/>
+
+
+    <bean id="clientFactoryBean" class="org.springframework.data.solr.server.support.HttpSolrClientFactoryBean">
+        <property name="url" value="http://127.0.0.1:8160/solr"/>
+    </bean>
+
+    <bean id="solrTemplate" class="org.springframework.data.solr.core.SolrTemplate">
+        <constructor-arg ref="clientFactoryBean"/>
+    </bean>
+
+
+
+
+
+    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <!--
+            心跳包
+        -->
+    </bean>
+
+
+    <bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="username" value="2289357230@qq.com"></property>
+        <property name="password" value="izkpqkvasomfechi"></property>
+        <property name="host" value="smtp.qq.com"></property>
+        <property name="defaultEncoding" value="utf-8"></property>
+        <property name="protocol" value="smtp"></property>
+    </bean>
+    <bean id="simpleMailMessage"  class="org.springframework.mail.SimpleMailMessage" scope="prototype">
+        <property name="from" value="2289357230@qq.com"></property>
+        <property name="subject" value="爱旅行项目组"></property>
+    </bean>
+
+
+    <bean id="connectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <property name="database" value="0"/>
+        <property name="hostName" value="127.0.0.1"/>
+        <property name="port" value="6379"></property>
+        <property name="timeout" value="3000"></property>
+        <property name="usePool" value="true"/>
+        <property name="poolConfig" ref="poolConfig" ></property>
+    </bean>
+
+    <bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+        <property name="connectionFactory" ref="connectionFactory"></property>
+    </bean>
+
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="connectionFactory"></property>
+        <property name="defaultSerializer">
+            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer"></bean>
+        </property>
+    </bean>
+
+</beans>

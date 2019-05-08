@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itrip.dao.CommentMapper">
+
+    <select id="gettraveltype" resultType="cn.itrip.dao.pojo.hotelFeatureList">
+        SELECT id,name,description,pic FROM itrip_label_dic ild WHERE ild.parentId=107;
+    </select>
+
+    <select id="gethoteldesc" resultType="cn.itrip.pojo.ItripHotel" parameterType="java.lang.Long">
+        SELECT * FROM itrip_hotel WHERE id=#{hotelId};
+    </select>
+
+    <select id="getimg" parameterType="java.lang.Long" resultType="cn.itrip.pojo.ItripImage">
+        SELECT ih.id,ih.hotelName,ii.imgUrl FROM itrip_image ii,itrip_hotel ih WHERE ih.id=ii.targetId and ii.type=0 and ih.id=#{hotelId};
+    </select>
+
+    <insert id="add" parameterType="cn.itrip.dao.pojo.itripImages">
+        insert into itrip_comment values
+        (null,#{hotelId},#{productId},#{orderId},#{productType},#{content},#{token},#{isHavingImg},
+        #{positionScore},#{facilitiesScore},#{serviceScore},#{hygieneScore},
+        #{id},#{tripMode},#{isOk},NOW(),#{token},NOW(),#{token})
+    </insert>
+
+    <select id="getpersonalorderinfo" resultType="cn.itrip.dao.pojo.PersonalOrderInfo">
+        SELECT
+        iho.orderType,
+        iho.creationDate,
+        iho.id,
+        iho.noticePhone,
+        iho.orderNo,
+        iho.orderStatus,
+        iho.payAmount,
+        iho.payType,
+        ihr.payType roomPayType
+        FROM itrip_hotel_order iho,itrip_hotel_room ihr
+        WHERE iho.roomId=ihr.id AND iho.userId=#{token} AND iho.id=#{id};
+    </select>
+
+    <select id="getpersonalorderroominfo" resultType="cn.itrip.dao.pojo.OrderDetails">
+        SELECT
+        iho.id,
+        ih.address,
+        iho.bookingDays,
+        iho.checkInDate,
+        DAYOFWEEK(iho.checkInDate)-1 checkInWeek,
+        iho.checkOutDate,
+        DAYOFWEEK(iho.checkOutDate)-1 checkOutWeek,
+        iho.count,
+        iho.hotelId,
+        ih.hotelLevel,
+        ih.hotelName,
+        ihr.isHavingBreakfast,
+        iho.linkUserName,
+        iho.payAmount,
+        ihr.roomBedTypeId,
+        ild.`name` roomBedTypeName,
+        iho.roomId,
+        ihr.payType,
+        ihr.roomTitle,
+        iho.specialRequirement FROM itrip_hotel ih,itrip_hotel_order iho,itrip_hotel_room ihr,itrip_label_dic ild
+        WHERE ih.id=iho.hotelId
+        AND
+        ihr.roomBedTypeId=ild.id
+        AND
+        iho.roomId=ihr.id
+        AND iho.id=#{orderId}
+		AND iho.userId=#{token};
+    </select>
+
+    <select id="getcommentlist" parameterType="cn.itrip.pojo.CommentEntity" resultType="cn.itrip.pojo.CommentTableDic">
+        SELECT
+        iho.checkInDate checkInDate,
+        ic.content,
+        ic.creationDate,
+        ih.hotelLevel,
+        ic.id,
+        ic.isHavingImg,
+        ihr.roomTitle,
+        ic.score,
+        ild.`name` tripModeName,
+        iu.userCode
+        FROM itrip_comment ic
+        LEFT JOIN itrip_hotel_order iho ON ic.orderId=iho.id
+        LEFT JOIN itrip_hotel ih ON ic.hotelId=ih.id
+        LEFT JOIN itrip_hotel_room ihr ON iho.roomId=ihr.id
+        LEFT JOIN itrip_label_dic ild ON ic.tripMode=ild.id
+        LEFT JOIN itrip_user iu ON ic.userId=iu.id
+        <where>
+            ic.hotelId=#{hotelId}
+            <if test="isOk !=null and isOk>-1">
+                and ic.isOk=#{isOk}
+            </if>
+
+            <if test="isHavingImg!=null and isHavingImg>-1">
+                and ic.isHavingImg=#{isHavingImg}
+            </if>
+        </where>
+        ORDER BY ic.id DESC
+    </select>
+
+    <select id="getImg" resultType="cn.itrip.pojo.ItripImage" parameterType="java.lang.Long">
+     SELECT ii.position,ii.imgUrl FROM itrip_comment ic,itrip_image ii WHERE ii.type=2 AND ii.targetId=ic.id AND ic.id=#{id};
+    </select>
+
+</mapper>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itrip.dao.AuthMapper">
+    <sql id="itrip_user">
+        id,userCode,userPassword,userType,flatId,userName,weChat,QQ,weibo,baidu,creationDate,createdBy,modifyDate,modifiedBy,activated
+    </sql>
+
+    <sql id="sql">
+        insert into itrip_user(<include refid="itrip_user"/>) values (null,#{userCode},#{userPassword},#{userType},#{flatId},
+        #{userName},#{weChat},#{qq},#{weibo},#{baidu},#{creationDate},#{createdBy},#{modifyDate},#{modifiedBy},#{activated});
+    </sql>
+    <insert id="registerByPhone">
+        <include refid="sql"/>
+    </insert>
+    <insert id="registerByEmail">
+       <include refid="sql"/>
+    </insert>
+    <update id="activate">
+        UPDATE itrip_user set activated=1 where userCode=#{name}
+    </update>
+    <select id="login" parameterType="cn.itrip.pojo.ItripUser" resultType="cn.itrip.pojo.ItripUser">
+      select * from itrip_user where userCode=#{userCode} and userPassword=#{userPassword}
+    </select>
+    <select id="isExits" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(1) from itrip_user where userCode=#{name}
+    </select>
+</mapper>

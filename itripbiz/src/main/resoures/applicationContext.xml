@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <context:component-scan base-package="cn.itrip.service.impl"/>
+    <task:annotation-driven/>
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:jdbc.properties"/>
+    </bean>
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+        <property name="username" value="${jdbc.username}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="password" value="${jdbc.userpassword}"/>
+        <property name="driverClassName" value="${jdbc.Driver}"/>
+    </bean>
+
+    <bean class="cn.itrip.utils.RedisAPI"/>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            　　helperDialect=mysql
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="cn.itrip.dao"></property>
+    </bean>
+
+    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <!--
+            心跳包
+        -->
+    </bean>
+
+
+    <bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="username" value="2289357230@qq.com"></property>
+        <property name="password" value="izkpqkvasomfechi"></property>
+        <property name="host" value="smtp.qq.com"></property>
+        <property name="defaultEncoding" value="utf-8"></property>
+        <property name="protocol" value="smtp"></property>
+    </bean>
+    <bean id="simpleMailMessage"  class="org.springframework.mail.SimpleMailMessage" scope="prototype">
+        <property name="from" value="2289357230@qq.com"></property>
+        <property name="subject" value="爱旅行项目组"></property>
+    </bean>
+
+    <bean id="connectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <property name="database" value="0"/>
+        <property name="hostName" value="127.0.0.1"/>
+        <property name="port" value="6379"></property>
+        <property name="timeout" value="3000"></property>
+        <property name="usePool" value="true"/>
+        <property name="poolConfig" ref="poolConfig" ></property>
+    </bean>
+
+    <bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+        <property name="connectionFactory" ref="connectionFactory"></property>
+    </bean>
+
+
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="connectionFactory"></property>
+        <property name="defaultSerializer">
+            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer"></bean>
+        </property>
+    </bean>
+
+    <!--事务管理器-->
+
+    <bean id="txManager"  class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--声明事务-->
+    <tx:advice  id="txAdvice" transaction-manager="txManager">
+    <tx:attributes>
+    <tx:method name="ins*"/>
+    <tx:method name="del*"/>
+    <tx:method name="add*"/>
+    <tx:method name="upd*"/>
+    <!--<tx:method name="*" read-only="true"/>-->
+    </tx:attributes>
+    </tx:advice>
+
+    <!--配置AOP-->
+    <aop:config>
+        <aop:pointcut id="myPoint" expression="execution(* cn.itrip.service.impl.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="myPoint"/>
+    </aop:config>
+</beans>

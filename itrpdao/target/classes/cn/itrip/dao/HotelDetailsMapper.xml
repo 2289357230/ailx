@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="cn.itrip.dao.HotelDetailsMapper">
+
+    <select id="queryhotelroombed" resultType="cn.itrip.pojo.ItripLabelDic">
+        SELECT description,id,`name`,pic FROM itrip_label_dic  WHERE parentId=1;
+    </select>
+
+    <select id="selectStore" resultType="java.lang.Long">
+    SELECT IFNULL(min(store),0)
+    from itrip_hotel_temp_store
+    where roomId = #{param1}
+    and recordDate &gt;= #{param2}
+    and recordDate &lt;= #{param3};
+    </select>
+
+    <select id="selectRealStore" resultType="java.lang.Long">
+    SELECT store from itrip_product_store where productType = 1 and productId = #{roomId}
+    </select>
+
+    <select id="selectStoreExceptCount" resultType="java.lang.Long">
+    SELECT IFNULL(sum(count),0) from itrip_hotel_order iho where iho.roomId = #{roomId} and iho.orderStatus = 0 and (
+        DATE(#{startDate})&gt;= DATE(iho.checkInDate) and DATE(#{startDate})&lt;=DATE(iho.checkOutDate)
+        or
+        DATE(#{endDate}) &gt;= DATE(iho.checkInDate) and DATE(#{endDate}) &lt;= DATE(iho.checkOutDate)
+        or
+        DATE(#{startDate}) &lt;= DATE(iho.checkInDate) and DATE(#{endDate}) &gt;= DATE(iho.checkOutDate)
+    )
+    </select>
+
+    <select id="searchInformationByRommId" resultType="cn.itrip.pojo.ItripHotelRoom">
+        select * from itrip_hotel_room
+        <where>
+        <foreach collection="list" item="id" open="id in(" close=")" separator=",">
+                #{id}
+        </foreach>
+        </where>
+    </select>
+
+    <select id="queryhotelroombyhotel" resultType="java.lang.Integer" parameterType="cn.itrip.dao.pojo.QueryHotelRoomByHotel">
+        SELECT
+        ihr.id
+        FROM
+        itrip_hotel_room ihr
+        WHERE
+        ihr.hotelId=#{hotelId}
+        <if test="isBook!=null and isBook>0">
+            AND ihr.isBook=#{isBook}
+        </if>
+        <if test="isHavingBreakfast!=null and isHavingBreakfast>0">
+            AND ihr.isHavingBreakfast=#{isHavingBreakfast}
+        </if>
+        <if test="isTimelyResponse!=null and isTimelyResponse>0">
+            AND ihr.isTimelyResponse=#{isTimelyResponse}
+        </if>
+        <if test="roomBedTypeId!=null and roomBedTypeId>0">
+            AND ihr.roomBedTypeId=#{roomBedTypeId}
+        </if>
+        <if test="payType!=null and payType>0">
+            AND ihr.payType=#{payType}
+        </if>
+        <if test="isCancel!=null and isCancel>0">
+            AND ihr.isCancel=#{isCancel}
+        </if>
+    </select>
+
+    <select id="getImg" parameterType="java.lang.Long" resultType="cn.itrip.pojo.ItripImage">
+        SELECT imgUrl,position FROM itrip_image ii,itrip_hotel_room ihr WHERE ii.targetId=ihr.id AND ihr.id=#{hoetlId} AND type=1;
+    </select>
+
+    <select id="getvideodesc" resultMap="forViewGetVideoDesc">
+        select id, hotelName from itrip_hotel where id = #{param1}
+    </select>
+
+     <resultMap id="forViewGetVideoDesc" type="cn.itrip.dao.pojo.ListExt">
+        <result property="hotelName" column="hotelName"/>
+        <collection property="hotelFeatureList" select="selectHotelFeatureListByHotelId" column="id"/>
+        <collection property="tradingAreaNameList" select="selectTradingAreaNameListByHotelId" column="id"></collection>
+    </resultMap>
+
+    <select id="selectHotelFeatureListByHotelId" resultType="string">
+        select d.name as hotelFeatureList from itrip_hotel_feature f, itrip_label_dic d where f.featureId = d.id and f.hotelId = #{param1}
+    </select>
+
+    <select id="selectTradingAreaNameListByHotelId" resultType="string">
+        select d.name as tradingAreaNameList from itrip_hotel_trading_area a, itrip_area_dic d where a.areaId = d.id and a.hotelId = #{param1}
+    </select>
+
+    <select id="queryhotelfacilities" resultType="cn.itrip.pojo.ItripHotel" parameterType="java.lang.Long">
+        SELECT facilities,hotelPolicy,details FROM itrip_hotel WHERE id=#{hotelId};
+    </select>
+
+    <select id="gethotelscore" resultType="cn.itrip.dao.pojo.AvgScore" parameterType="java.lang.Long">
+      SELECT
+      ROUND(IFNULL(AVG(ic.score),5),1) avgScore,
+      ROUND(IFNULL(AVG(ic.positionScore),5),1) avgPositionScore,
+      ROUND(IFNULL(AVG(ic.serviceScore),5),1) avgServiceScore,
+      ROUND(IFNULL(AVG(ic.facilitiesScore),5),1) avgFacilitiesScore,
+      ROUND(IFNULL(AVG(ic.hygieneScore),5),1) avgHygieneScore
+      FROM itrip_comment ic
+      WHERE ic.hotelId=#{hotelId};
+    </select>
+
+    <select id="getcount" parameterType="java.lang.Long" resultType="cn.itrip.dao.pojo.CommentCount">
+        SELECT
+        COUNT(ic.hotelId) allcomment,
+        (SELECT COUNT(ico.hotelId) FROM itrip_comment ico WHERE ico.hotelId=#{id} AND ico.isOk=1) isok,
+        (SELECT COUNT(ico1.hotelId) FROM itrip_comment ico1 WHERE ico1.hotelId=#{id} AND ico1.isOk=0) improve,
+        (SELECT COUNT(ico2.hotelId) FROM itrip_comment ico2 WHERE ico2.hotelId=#{id} AND ico2.isHavingImg=1) havingimg
+        FROM itrip_comment ic
+        WHERE ic.hotelId=#{id}
+    </select>
+
+    <select id="queryhotcity" parameterType="java.lang.Long" resultType="cn.itrip.pojo.ItripAreaDic">
+      SELECT id,name FROM itrip_area_dic WHERE isChina=#{isChina} AND isHot=1;
+    </select>
+
+    <select id="queryhotelfeature" resultType="cn.itrip.pojo.ItripLabelDic">
+        SELECT ild.id,ild.name,ild.description,ild.pic FROM itrip_label_dic ild WHERE ild.parentId=16;
+    </select>
+
+    <select id="querytradearea" resultType="cn.itrip.pojo.ItripAreaDic" parameterType="java.lang.Long">
+        SELECT iad1.id,iad1.`name` FROM itrip_area_dic iad,itrip_area_dic iad1 WHERE iad.id=iad1.parent AND iad.id=#{id};
+    </select>
+
+    <select id="queryhoteldetails" resultType="cn.itrip.pojo.ItripLabelDic" parameterType="java.lang.Long">
+        select ild.`name`,ild.description from itrip_hotel_feature ihf, itrip_label_dic ild where ihf.featureId = ild.id and ihf.hotelId =#{hotelId};
+    </select>
+
+    <select id="queryFinal" resultType="cn.itrip.pojo.ItripLabelDic" parameterType="java.lang.Long">
+       SELECT ih.details description FROM itrip_hotel ih WHERE ih.id=#{hotelId};
+    </select>
+</mapper>
